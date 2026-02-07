@@ -2,8 +2,8 @@ FROM php:8.3-apache
 
 # Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
-    libpq-dev git unzip libpng-dev libonig-dev libxml2-dev zip \
-    && docker-php-ext-install pdo pdo_pgsql pgsql mbstring gd
+    libpq-dev git unzip libpng-dev libonig-dev libxml2-dev zip libzip-dev libicu-dev \
+    && docker-php-ext-install pdo pdo_pgsql pgsql mbstring gd bcmath zip intl
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
