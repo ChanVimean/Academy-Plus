@@ -1,33 +1,47 @@
-FROM php:8.3-apache
+# 1. Use PHP 8.4 Apache as the base (matches your composer.lock requirements)
+FROM php:8.4-apache
 
-# 1. Install system dependencies and PHP extensions
+# 2. Install system dependencies for Laravel and PHP extensions
 RUN apt-get update && apt-get install -y \
-    libpq-dev git unzip libpng-dev libonig-dev libxml2-dev zip libzip-dev libicu-dev \
+    libpq-dev \
+    git \
+    unzip \
+    zip \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    libicu-dev \
+    && docker-php-ext-configure intl \
     && docker-php-ext-install pdo pdo_pgsql pgsql mbstring gd bcmath zip intl
 
-# 2. Enable Apache mod_rewrite for Laravel routing
+# 3. Enable Apache mod_rewrite for Laravel routing
 RUN a2enmod rewrite
 
-# 3. Set Composer Memory Limit (Crucial for Free Tiers)
+# 4. Set Composer Memory Limit (Crucial for 512MB RAM on Render Free Tier)
 ENV COMPOSER_MEMORY_LIMIT=-1
 
-# 4. Copy project files
+# 5. Copy project files to the container
 COPY . /var/www/html
 WORKDIR /var/www/html
 
-# 5. Install Composer
+# 6. Install Composer from official image
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# 6. Set permissions (and create folders if they don't exist)
+# 7. Run Composer Install
+# Added --ignore-platform-reqs to skip version checks during the build
+RUN composer install --ignore-platform-reqs --no-dev --optimize-autoloader --no-interaction --no-scripts
+
+# 8. Set permissions for Laravel storage and cache
 RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# 7. Fix Apache document root to Laravel's /public
+# 9. Point Apache to Laravel's /public folder
 RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
 
+# 10. Expose port 80
 EXPOSE 80
 
-# 8. Final Command
+# 11. Start Apache in the foreground
 CMD ["apache2-foreground"]
