@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y \
 # 3. Enable Apache mod_rewrite for Laravel routing
 RUN a2enmod rewrite
 
-# 4. Set Composer Memory Limit (Crucial for 512MB RAM on Render Free Tier)
+# 4. Set Composer Memory Limit
 ENV COMPOSER_MEMORY_LIMIT=-1
 
 # 5. Copy project files to the container
@@ -28,8 +28,7 @@ WORKDIR /var/www/html
 # 6. Install Composer from official image
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# 7. Run Composer Install
-# Added --ignore-platform-reqs to skip version checks during the build
+# 7. Run Composer Install (One single command)
 RUN composer install --ignore-platform-reqs --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # 8. Set permissions for Laravel storage and cache
