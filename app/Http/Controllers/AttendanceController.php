@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
-use App\Models\Student;
 use App\Models\Subject;
 use Illuminate\Http\Request;
 
@@ -12,13 +11,19 @@ class AttendanceController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $history = Attendance::with(['student', 'subject'])
-            ->orderBy('attendance_date', 'desc')
-            ->paginate(25);
+        $subjects = Subject::orderBy('name')->get();
 
-        return view('attendance.index', compact('history'));
+        $history = Attendance::with(['student', 'subject'])
+            ->when($request->subject_id, function ($query, $subject_id) {
+                return $query->where('subject_id', $subject_id);
+            })
+            ->orderBy('attendance_date', 'desc')
+            ->paginate(25)
+            ->withQueryString();
+
+        return view('attendance.index', compact('history', 'subjects'));
     }
 
     /**
@@ -26,7 +31,7 @@ class AttendanceController extends Controller
      */
     public function create(Subject $subject)
     {
-        $students = Student::orderBy('name', 'asc')->get();
+        $students = $subject->students()->orderBy('name')->get();
 
         return view('attendance.create', compact('subject', 'students'));
     }
@@ -34,26 +39,23 @@ class AttendanceController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, Subject $subject)
     {
-        $request->validate([
-            'subject_id' => 'required|exists:subjects,id',
-            'date' => 'required|date',
-            'attendances' => 'required|array',
-            'attendances.*.status' => 'required|in:present,late,absent',
-        ]);
-
-        foreach ($request->attendances as $studentId => $data) {
-            Attendance::create([
-                'student_id' => $studentId,
-                'subject_id' => $request->subject_id,
-                'attendance_date' => $request->date,
-                'status' => $data['status'],
-                'notes' => $data['notes'] ?? null,
-            ]);
+        foreach ($request->status as $studentId => $status) {
+            Attendance::updateOrCreate(
+                [
+                    'student_id' => $studentId,
+                    'subject_id' => $subject->id,
+                    'attendance_date' => now()->format('Y-m-d'),
+                ],
+                [
+                    'status' => $status,
+                    'notes' => $request->notes[$studentId] ?? null,
+                ]
+            );
         }
 
-        return redirect()->route('dashboard')->with('success', 'Attendance recorded!');
+        return redirect()->route('subjects.index')->with('success', 'Attendance recorded!');
     }
 
     /**

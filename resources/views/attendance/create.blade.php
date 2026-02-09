@@ -7,7 +7,7 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <form action="{{ route('attendance.store') }}" method="POST">
+            <form action="{{ route('attendance.store', $subject->id) }}" method="POST">
                 @csrf
                 <input type="hidden" name="subject_id" value="{{ $subject->id }}">
 
@@ -32,24 +32,28 @@
                                     <td class="p-4">
                                         <div class="flex justify-center gap-3">
                                             <label class="cursor-pointer">
-                                                <input type="radio" name="attendances[{{ $student->id }}][status]"
-                                                    value="present" class="peer hidden" checked>
+                                                <input type="radio" name="status[{{ $student->id }}]" value="present"
+                                                    class="peer hidden" checked>
                                                 <span
-                                                    class="px-4 py-2 rounded border text-xs font-bold transition-all peer-checked:bg-green-600 peer-checked:text-white">PRESENT</span>
+                                                    class="px-4 py-2 rounded border text-xs font-bold transition-all peer-checked:bg-green-600 peer-checked:text-white border-green-600 text-green-600">PRESENT</span>
                                             </label>
                                             <label class="cursor-pointer">
-                                                <input type="radio" name="attendances[{{ $student->id }}][status]"
-                                                    value="late" class="peer hidden">
+                                                <input type="radio" name="status[{{ $student->id }}]" value="late"
+                                                    class="peer hidden">
                                                 <span
-                                                    class="px-4 py-2 rounded border text-xs font-bold transition-all peer-checked:bg-orange-500 peer-checked:text-white">LATE</span>
+                                                    class="px-4 py-2 rounded border text-xs font-bold transition-all peer-checked:bg-orange-500 peer-checked:text-white border-orange-500 text-orange-500">LATE</span>
                                             </label>
                                             <label class="cursor-pointer">
-                                                <input type="radio" name="attendances[{{ $student->id }}][status]"
-                                                    value="absent" class="peer hidden">
+                                                <input type="radio" name="status[{{ $student->id }}]" value="absent"
+                                                    class="peer hidden">
                                                 <span
-                                                    class="px-4 py-2 rounded border text-xs font-bold transition-all peer-checked:bg-red-600 peer-checked:text-white">ABSENT</span>
+                                                    class="px-4 py-2 rounded border text-xs font-bold transition-all peer-checked:bg-red-600 peer-checked:text-white border-red-600 text-red-600">ABSENT</span>
                                             </label>
                                         </div>
+                                    </td>
+                                    <td class="p-4">
+                                        <x-text-input name="notes[{{ $student->id }}]" placeholder="Reason..."
+                                            class="w-full text-sm" />
                                     </td>
                                 </tr>
                             @endforeach

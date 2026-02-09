@@ -15,9 +15,9 @@ class AttendanceSystemSeeder extends Seeder
     public function run(): void
     {
         $teacher = User::create([
-            'name' => 'Teacher Jane',
-            'email' => 'jane@example.com',
-            'password' => Hash::make('password'),
+            'name' => 'Song Jinwoo',
+            'email' => 'jinwoo@gmail.com',
+            'password' => Hash::make('jinwoo123'),
         ]);
 
         // 2. Create Subjects for this teacher

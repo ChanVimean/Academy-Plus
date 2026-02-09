@@ -3,8 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Attendance;
 use App\Models\User;
+use App\Models\Student;
+use App\Models\Attendance;
 
 class Subject extends Model
 {
@@ -21,5 +22,10 @@ class Subject extends Model
     public function teacher()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function students()
+    {
+        return $this->belongsToMany(Student::class, 'enrollments');
     }
 }

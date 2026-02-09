@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Student;
+use App\Models\Subject;
 use Illuminate\Http\Request;
 
 class StudentController extends Controller
@@ -14,9 +15,14 @@ class StudentController extends Controller
     {
         $students = Student::latest()->get();
 
+        $subjects = Subject::orderBy('name')->get();
+
         $editStudent = null;
-        if ($request->has('edit')) $editStudent = Student::find($request->edit);
-        return view('students.index', compact('students', 'editStudent'));
+        if ($request->has('edit')) {
+            $editStudent = Student::with('subjects')->find($request->edit);
+        }
+
+        return view('students.index', compact('students', 'editStudent', 'subjects'));
     }
 
     /**
@@ -34,12 +40,14 @@ class StudentController extends Controller
     {
         $request->validate([
             'name' => 'required|string',
-            'student_id_number' => 'required|unique:students'
+            'subject_id' => 'required|exists:subjects,id',
         ]);
 
-        Student::create($request->only(['name', 'student_id_number']));
+        $student = Student::create($request->only(['name']));
 
-        return redirect()->route('students.index')->with('success', 'Student added!');
+        $student->subjects()->attach($request->subject_id);
+
+        return redirect()->route('students.index')->with('success', 'Student registered and enrolled!');
     }
 
     /**
@@ -65,10 +73,12 @@ class StudentController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'student_id_number' => 'required|string|unique:students,student_id_number,' . $student->id,
+            'subject_id' => 'required|exists:subjects,id',
         ]);
 
-        $student->update($request->only(['name', 'student_id_number']));
+        $student->update($request->only(['name']));
+
+        $student->subjects()->sync([$request->subject_id]);
 
         return redirect()->route('students.index')->with('success', 'Student updated!');
     }
@@ -78,6 +88,10 @@ class StudentController extends Controller
      */
     public function destroy(Student $student)
     {
-        //
+        $student->subjects()->detach();
+
+        $student->delete();
+
+        return redirect()->route('students.index')->with('success', 'Student and their enrollment data removed successfully.');
     }
 }

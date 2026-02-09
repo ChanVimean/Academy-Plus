@@ -1,9 +1,9 @@
 <?php
 
-use App\Http\Controllers\StudentController;
-use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StudentController;
+use App\Http\Controllers\SubjectController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -20,20 +20,16 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // 2. Student Management
+    // 2. Student & Subject
     // CRUD: index, create, store, edit, update, destroy
     Route::resource('students', StudentController::class);
-
-    // 3. Subject (Class) Management
     Route::resource('subjects', SubjectController::class);
 
-    // 4. Attendance Logic
+    // 3. Attendance
     // Custom route to open the sheet for a specific class
-    Route::get('/attendance/take/{subject}', [AttendanceController::class, 'create'])
-        ->name('attendance.take');
-
-    // Resource for viewing history (index) and saving records (store)
-    Route::resource('attendance', AttendanceController::class)->only(['index', 'store']);
+    Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+    Route::get('/attendance/take/{subject}', [AttendanceController::class, 'create'])->name('attendance.take');
+    Route::post('/attendance/store/{subject}', [AttendanceController::class, 'store'])->name('attendance.store');
 });
 
 require __DIR__.'/auth.php';
