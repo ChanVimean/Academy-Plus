@@ -7,25 +7,34 @@ use Illuminate\Http\Request;
 
 class SubjectController extends Controller
 {
-    public function index(Request $request)
-    {
-        $subjects = Subject::withCount('students')->get();
-        $editSubject = null;
+    public function index()
+{
+    $query = Subject::withCount('students');
 
-        if ($request->has('edit')) {
-            $editSubject = Subject::find($request->edit);
-        }
-
-        return view('subjects.index', compact('subjects', 'editSubject'));
+    if (auth()->user()->is_admin) {
+        $subjects = $query->with('teacher')->get();
+        $teachers = \App\Models\User::where('is_admin', false)->get();
+    } else {
+        $subjects = $query->where('user_id', auth()->id())->get();
+        $teachers = collect();
     }
+
+    return view('subjects.index', compact('subjects', 'teachers'));
+}
 
     public function store(Request $request)
     {
-        $request->validate(['name' => 'required|string|unique:subjects,name']);
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'section' => 'nullable|string|max:50',
+            'room' => 'nullable|string|max:50',
+        ]);
 
         Subject::create([
             'name' => $request->name,
-            'user_id' => auth()->id(), // Assuming teachers manage their own classes
+            'section' => $request->section,
+            'room' => $request->room,
+            'user_id' => auth()->id(),
         ]);
 
         return redirect()->route('subjects.index')->with('success', 'Subject created!');
@@ -33,16 +42,27 @@ class SubjectController extends Controller
 
     public function update(Request $request, Subject $subject)
     {
-        $request->validate(['name' => 'required|string|unique:subjects,name,'.$subject->id]);
+        if ($subject->user_id !== auth()->id()) {
+            abort(403);
+        }
 
-        $subject->update($request->only('name'));
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'section' => 'nullable|string|max:50',
+            'room' => 'nullable|string|max:50',
+        ]);
+
+        $subject->update($request->only(['name', 'section', 'room']));
 
         return redirect()->route('subjects.index')->with('success', 'Subject updated!');
     }
 
     public function destroy(Subject $subject)
     {
-        // Deleting the subject will automatically detach students due to database constraints
+        if ($subject->user_id !== auth()->id()) {
+            abort(403);
+        }
+
         $subject->delete();
 
         return redirect()->route('subjects.index')->with('success', 'Subject/Class removed.');

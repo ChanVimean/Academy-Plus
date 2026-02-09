@@ -11,6 +11,8 @@ class Subject extends Model
 {
     protected $fillable = [
         'name',
+        'section',
+        'room',
         'user_id',
     ];
 
