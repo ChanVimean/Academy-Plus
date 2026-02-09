@@ -13,17 +13,38 @@ class AttendanceController extends Controller
      */
     public function index(Request $request)
     {
-        $subjects = Subject::orderBy('name')->get();
+        $subjects = Subject::all();
 
-        $history = Attendance::with(['student', 'subject'])
-            ->when($request->subject_id, function ($query, $subject_id) {
-                return $query->where('subject_id', $subject_id);
-            })
-            ->orderBy('attendance_date', 'desc')
-            ->paginate(25)
-            ->withQueryString();
+        // 1. Base Query: Get records with student and subject info
+        $query = Attendance::with(['student', 'subject']);
 
-        return view('attendance.index', compact('history', 'subjects'));
+        if ($request->filled('search_student')) {
+            $query->whereHas('student', function ($q) use ($request) {
+                $q->where('name', 'like', '%'.$request->search_student.'%');
+            });
+        }
+
+        if ($request->filled('filter_subject')) {
+            $query->where('subject_id', $request->filter_subject);
+        }
+
+        if ($request->filled('filter_status')) {
+            $query->where('status', $request->filter_status);
+        }
+
+        $history = $query->latest()->paginate(20);
+
+        // --- ANALYTICS: Who is absent the most? ---
+        // This is the "Engine" part. We count absences grouped by student.
+        $topAbsentees = Attendance::where('status', 'absent')
+            ->select('student_id', \DB::raw('count(*) as total'))
+            ->with('student')
+            ->groupBy('student_id')
+            ->orderByDesc('total')
+            ->take(5)
+            ->get();
+
+        return view('attendance.index', compact('history', 'subjects', 'topAbsentees'));
     }
 
     /**

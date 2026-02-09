@@ -13,16 +13,29 @@ class StudentController extends Controller
      */
     public function index(Request $request)
     {
-        $students = Student::latest()->get();
+        $query = Student::with('subjects');
 
-        $subjects = Subject::orderBy('name')->get();
+        // Filter 1: Student Name
+        if ($request->filled('search_name')) {
+            $query->where('name', 'like', '%'.$request->search_name.'%');
+        }
+
+        // Filter 2: By Class (Subject)
+        if ($request->filled('filter_subject')) {
+            $query->whereHas('subjects', function ($q) use ($request) {
+                $q->where('subjects.id', $request->filter_subject);
+            });
+        }
+
+        $students = $query->latest()->get();
+        $subjects = Subject::all();
 
         $editStudent = null;
         if ($request->has('edit')) {
             $editStudent = Student::with('subjects')->find($request->edit);
         }
 
-        return view('students.index', compact('students', 'editStudent', 'subjects'));
+        return view('students.index', compact('students', 'subjects', 'editStudent'));
     }
 
     /**
@@ -38,32 +51,17 @@ class StudentController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string',
-            'subject_id' => 'required|exists:subjects,id',
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'subject_ids' => 'required|array',
+            'subject_ids.*' => 'exists:subjects,id',
         ]);
 
-        $student = Student::create($request->only(['name']));
+        $student = Student::create(['name' => $data['name']]);
 
-        $student->subjects()->attach($request->subject_id);
+        $student->subjects()->sync($request->subject_ids);
 
-        return redirect()->route('students.index')->with('success', 'Student registered and enrolled!');
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Student $student)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Student $student)
-    {
-        //
+        return redirect()->route('students.index')->with('success', 'Student registered in multiple classes!');
     }
 
     /**
@@ -71,16 +69,16 @@ class StudentController extends Controller
      */
     public function update(Request $request, Student $student)
     {
-        $request->validate([
+        $data = $request->validate([
             'name' => 'required|string|max:255',
-            'subject_id' => 'required|exists:subjects,id',
+            'subject_ids' => 'array',
         ]);
 
-        $student->update($request->only(['name']));
+        $student->update(['name' => $data['name']]);
 
-        $student->subjects()->sync([$request->subject_id]);
+        $student->subjects()->sync($request->subject_ids ?? []);
 
-        return redirect()->route('students.index')->with('success', 'Student updated!');
+        return redirect()->route('students.index')->with('success', 'Student records updated!');
     }
 
     /**

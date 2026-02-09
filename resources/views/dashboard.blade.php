@@ -25,22 +25,43 @@
                     </a>
                 </li>
 
-                <li
-                    class="group bg-white overflow-hidden shadow-sm sm:rounded-lg border border-transparent hover:border-green-500 transition-all duration-200">
-                    <a href="{{ route('students.index') }}" class="block p-6">
-                        <div class="flex items-center space-x-4">
-                            <div
-                                class="p-3 bg-green-100 rounded-lg group-hover:bg-green-500 transition-colors duration-200">
-                                <span
-                                    class="text-2xl group-hover:filter group-hover:brightness-0 group-hover:invert">🎓</span>
+                @if (auth()->user()->is_admin)
+                    <li
+                        class="group bg-white overflow-hidden shadow-sm sm:rounded-lg border border-transparent hover:border-green-500 transition-all duration-200">
+                        <a href="{{ route('students.index') }}" class="block p-6">
+                            <div class="flex items-center space-x-4">
+                                <div
+                                    class="p-3 bg-green-100 rounded-lg group-hover:bg-green-500 transition-colors duration-200">
+                                    <span
+                                        class="text-2xl group-hover:filter group-hover:brightness-0 group-hover:invert">🎓</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-900">Students</h3>
+                                    <p class="text-sm text-gray-500">Manage your students</p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 class="text-lg font-bold text-gray-900">Students</h3>
-                                <p class="text-sm text-gray-500">Manage your roster</p>
+                        </a>
+                    </li>
+                @endif
+
+                @if (auth()->user()->is_admin)
+                    <li
+                        class="group bg-white overflow-hidden shadow-sm sm:rounded-lg border border-transparent hover:border-purple-500 transition-all duration-200">
+                        <a href="{{ route('teachers.index') }}" class="block p-6">
+                            <div class="flex items-center space-x-4">
+                                <div
+                                    class="p-3 bg-purple-100 rounded-lg group-hover:bg-purple-500 transition-colors duration-200">
+                                    <span
+                                        class="text-2xl group-hover:filter group-hover:brightness-0 group-hover:invert">📋</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-900">Teacher</h3>
+                                    <p class="text-sm text-gray-500">View Professors</p>
+                                </div>
                             </div>
-                        </div>
-                    </a>
-                </li>
+                        </a>
+                    </li>
+                @endif
 
                 <li
                     class="group bg-white overflow-hidden shadow-sm sm:rounded-lg border border-transparent hover:border-purple-500 transition-all duration-200">

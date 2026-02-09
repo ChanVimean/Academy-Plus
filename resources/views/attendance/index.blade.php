@@ -1,93 +1,89 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Attendance History
-            </h2>
-
-            <form action="{{ route('attendance.index') }}" method="GET" class="flex items-center gap-2">
-                <select name="subject_id" onchange="this.form.submit()"
-                    class="rounded-md border-gray-300 shadow-sm text-sm focus:ring-indigo-500">
-                    <option value="">All Subjects</option>
-                    @foreach ($subjects as $subject)
-                        <option value="{{ $subject->id }}"
-                            {{ request('subject_id') == $subject->id ? 'selected' : '' }}>
-                            {{ $subject->name }}
-                        </option>
-                    @endforeach
-                </select>
-                @if (request('subject_id'))
-                    <a href="{{ route('attendance.index') }}" class="text-xs text-red-500 hover:underline">Clear
-                        Filter</a>
-                @endif
-            </form>
-        </div>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">📋 Attendance Reporting Engine</h2>
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
-                    @if ($history->isEmpty())
-                        <div class="text-center py-12">
-                            <p class="text-gray-500 italic">No attendance records found for this selection.</p>
-                        </div>
-                    @else
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="bg-gray-50 text-xs uppercase text-gray-600 font-bold border-b">
-                                        <th class="p-4">Date</th>
-                                        <th class="p-4">Student</th>
-                                        <th class="p-4">Subject</th>
-                                        <th class="p-4">Status</th>
-                                        <th class="p-4">Notes</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($history as $record)
-                                        <tr class="border-b hover:bg-gray-50 transition">
-                                            <td class="p-4 text-sm whitespace-nowrap">
-                                                {{ \Carbon\Carbon::parse($record->attendance_date)->format('M d, Y') }}
-                                            </td>
-                                            <td class="p-4 font-bold text-gray-800">
-                                                {{ $record->student->name }}
-                                            </td>
-                                            <td class="p-4">
-                                                <span
-                                                    class="px-2 py-1 bg-blue-50 text-blue-700 text-[10px] rounded border border-blue-100 uppercase font-semibold">
-                                                    {{ $record->subject->name }}
-                                                </span>
-                                            </td>
-                                            <td class="p-4">
-                                                @php
-                                                    $color = match ($record->status) {
-                                                        'present' => 'bg-green-100 text-green-700 border-green-200',
-                                                        'late' => 'bg-orange-100 text-orange-700 border-orange-200',
-                                                        'absent' => 'bg-red-100 text-red-700 border-red-200',
-                                                        default => 'bg-gray-100 text-gray-700 border-gray-200',
-                                                    };
-                                                @endphp
-                                                <span
-                                                    class="px-3 py-1 rounded-full text-[10px] font-black uppercase border {{ $color }}">
-                                                    {{ $record->status }}
-                                                </span>
-                                            </td>
-                                            <td class="p-4 text-sm text-gray-500 italic">
-                                                {{ $record->notes ?? '-' }}
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                <form action="{{ route('attendance.index') }}" method="GET" class="flex flex-wrap gap-4 items-end">
+                    <div class="flex-1 min-w-[200px]">
+                        <x-input-label value="Search Student" class="text-[10px] font-bold" />
+                        <x-text-input name="search_student" value="{{ request('search_student') }}"
+                            placeholder="Enter name..." class="w-full text-sm" />
+                    </div>
 
-                        <div class="mt-6">
-                            {{ $history->links() }}
-                        </div>
+                    <div class="w-48">
+                        <x-input-label value="Class" class="text-[10px] font-bold" />
+                        <select name="filter_subject" class="w-full border-gray-300 rounded-md shadow-sm text-sm">
+                            <option value="">All Subjects</option>
+                            @foreach ($subjects as $subject)
+                                <option value="{{ $subject->id }}"
+                                    {{ request('filter_subject') == $subject->id ? 'selected' : '' }}>
+                                    {{ $subject->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="w-40">
+                        <x-input-label value="Status" class="text-[10px] font-bold" />
+                        <select name="filter_status" class="w-full border-gray-300 rounded-md shadow-sm text-sm">
+                            <option value="">Any Status</option>
+                            <option value="present" {{ request('filter_status') == 'present' ? 'selected' : '' }}>
+                                Present</option>
+                            <option value="absent" {{ request('filter_status') == 'absent' ? 'selected' : '' }}>Absent
+                            </option>
+                            <option value="late" {{ request('filter_status') == 'late' ? 'selected' : '' }}>Late
+                            </option>
+                        </select>
+                    </div>
+
+                    <x-primary-button class="h-10">Filter</x-primary-button>
+                    @if (request()->anyFilled(['search_student', 'filter_subject', 'filter_status']))
+                        <a href="{{ route('attendance.index') }}"
+                            class="text-xs text-gray-400 hover:text-gray-600 mb-2 underline">Reset</a>
                     @endif
+                </form>
+            </div>
 
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-xl border border-gray-200">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 border-b">
+                        <tr class="text-[10px] uppercase text-gray-400 font-black tracking-widest">
+                            <th class="p-4">Date & Time</th>
+                            <th class="p-4">Student</th>
+                            <th class="p-4">Subject</th>
+                            <th class="p-4 text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach ($history as $log)
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-4 text-sm text-gray-500">{{ $log->created_at->format('M d, Y') }} <span
+                                        class="text-[10px] block opacity-50">{{ $log->created_at->format('h:i A') }}</span>
+                                </td>
+                                <td class="p-4 font-bold text-gray-800">{{ $log->student->name }}</td>
+                                <td class="p-4 text-sm text-indigo-600">{{ $log->subject->name }}</td>
+                                <td class="p-4 text-center">
+                                    @php
+                                        $colors = [
+                                            'present' => 'bg-green-100 text-green-700',
+                                            'absent' => 'bg-red-100 text-red-700',
+                                            'late' => 'bg-orange-100 text-orange-700',
+                                        ];
+                                    @endphp
+                                    <span
+                                        class="px-2 py-1 rounded text-[10px] font-black uppercase {{ $colors[$log->status] ?? 'bg-gray-100' }}">
+                                        {{ $log->status }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                <div class="p-4 bg-gray-50 border-t">
+                    {{ $history->links() }}
                 </div>
             </div>
         </div>

@@ -1,130 +1,147 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col xl:flex-row justify-between items-center gap-4">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight whitespace-nowrap">
-                {{ isset($editSubject) ? 'Edit Class' : 'My Classes' }}
+        <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                {{ isset($editSubject) ? 'Edit Class' : 'Class Management' }}
             </h2>
 
             <form
                 action="{{ isset($editSubject) ? route('subjects.update', $editSubject->id) : route('subjects.store') }}"
-                method="POST" class="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+                method="POST" class="flex flex-wrap gap-2">
                 @csrf
                 @if (isset($editSubject))
                     @method('PUT')
                 @endif
 
-                <div class="flex flex-1 gap-2 min-w-[300px]">
-                    <x-text-input name="name" :value="old('name', $editSubject->name ?? '')" placeholder="Subject (e.g. Law)" class="flex-1 text-sm"
-                        required />
+                <x-text-input name="name" :value="old('name', $editSubject->name ?? '')" placeholder="Subject Name" required />
+                <x-text-input name="section" :value="old('section', $editSubject->section ?? '')" placeholder="Section" class="w-24" />
+                <x-text-input name="room" :value="old('room', $editSubject->room ?? '')" placeholder="Room" class="w-24" />
 
-                    <x-text-input name="section" :value="old('section', $editSubject->section ?? '')" placeholder="Section (e.g. A)"
-                        class="w-24 text-sm" />
+                @if (auth()->user()->is_admin)
+                    <select name="user_id"
+                        class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm"
+                        required>
+                        <option value="">Assign Teacher</option>
+                        @foreach ($teachers as $teacher)
+                            <option value="{{ $teacher->id }}"
+                                {{ old('user_id', $editSubject->user_id ?? '') == $teacher->id ? 'selected' : '' }}>
+                                {{ $teacher->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                @else
+                    <input type="hidden" name="user_id" value="{{ auth()->id() }}">
+                @endif
 
-                    <x-text-input name="room" :value="old('room', $editSubject->room ?? '')" placeholder="Room" class="w-24 text-sm" />
-                </div>
+                <x-primary-button class="{{ isset($editSubject) ? 'bg-orange-600 hover:bg-orange-700' : '' }}">
+                    {{ isset($editSubject) ? 'Update' : 'Add Class' }}
+                </x-primary-button>
 
-                <div class="flex items-center gap-2">
-                    <x-primary-button
-                        class="whitespace-nowrap {{ isset($editSubject) ? 'bg-orange-600 hover:bg-orange-700' : '' }}">
-                        {{ isset($editSubject) ? 'Update' : '+ Add Class' }}
-                    </x-primary-button>
-
-                    @if (isset($editSubject))
-                        <a href="{{ route('subjects.index') }}" class="text-sm text-gray-500 hover:underline">Cancel</a>
-                    @endif
-                </div>
+                @if (isset($editSubject))
+                    <a href="{{ route('subjects.index') }}"
+                        class="py-2 text-gray-400 hover:text-gray-600 text-sm">Cancel</a>
+                @endif
             </form>
         </div>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            @if (session('success'))
-                <div class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded shadow-sm">
-                    {{ session('success') }}
-                </div>
-            @endif
+
+            <div class="mb-6 flex justify-end">
+                <form action="{{ route('subjects.index') }}" method="GET" class="flex gap-2">
+                    <x-text-input name="search" value="{{ request('search') }}"
+                        placeholder="Search Class or Professor..." class="w-80" />
+                    <button type="submit"
+                        class="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition">Filter</button>
+                    @if (request('search'))
+                        <a href="{{ route('subjects.index') }}"
+                            class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition">Clear</a>
+                    @endif
+                </form>
+            </div>
 
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    @if ($subjects->isEmpty())
-                        <div class="text-center py-8">
-                            <p class="text-gray-500">No classes assigned to you yet. Create one above! 👆</p>
-                        </div>
-                    @else
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="border-b bg-gray-50">
-                                    <tr class="text-xs uppercase text-gray-500">
-                                        <th class="p-4">Subject & Details</th>
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 border-b">
+                        <tr class="text-xs uppercase text-gray-500 font-bold">
+                            <th class="p-4">Class Detail</th>
+                            <th class="p-4">Professor</th>
+                            <th class="p-4 text-center">Students</th>
+                            <th class="p-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($subjects as $subject)
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="p-4">
+                                    <div class="text-indigo-600 font-bold text-lg">{{ $subject->name }}</div>
+                                    <div class="text-xs text-gray-500">Section: {{ $subject->section ?? 'N/A' }} |
+                                        Room: {{ $subject->room ?? 'N/A' }}</div>
+                                </td>
+                                <td class="p-4">
+                                    <div class="flex items-center gap-2">
+                                        <div
+                                            class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500">
+                                            {{ strtoupper(substr($subject->teacher->name, 0, 1)) }}
+                                        </div>
+                                        <span
+                                            class="text-sm font-medium text-gray-700">{{ $subject->teacher->name }}</span>
+                                    </div>
+                                </td>
+                                <td class="p-4 text-center">
+                                    <span
+                                        class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold border border-blue-200">
+                                        {{ $subject->students_count }} Enrolled
+                                    </span>
+                                </td>
+                                <td class="p-4 text-right">
+                                    <div class="flex justify-end gap-3">
+                                        <a href="{{ route('subjects.index', ['edit' => $subject->id]) }}"
+                                            class="text-blue-600 hover:text-blue-900 text-sm font-medium">Edit</a>
+                                        <form action="{{ route('subjects.destroy', $subject->id) }}" method="POST"
+                                            onsubmit="return confirm('Delete this class?')">
+                                            @csrf @method('DELETE')
+                                            <button type="submit"
+                                                class="text-red-500 hover:text-red-700 text-sm font-medium">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                                <td class="p-4 text-right">
+                                    <div class="flex justify-end items-center gap-3">
+
+                                        <a href="{{ route('attendance.take', $subject->id) }}"
+                                            class="inline-flex items-center px-3 py-1.5 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-900 focus:outline-none focus:border-green-900 focus:ring ring-green-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                            <span class="mr-1">✅</span> Attendance
+                                        </a>
+
                                         @if (auth()->user()->is_admin)
-                                            <th class="p-4">Teacher</th>
+                                            <a href="{{ route('subjects.index', ['edit' => $subject->id]) }}"
+                                                class="text-sm font-medium text-blue-600 hover:text-blue-900 transition">
+                                                Edit
+                                            </a>
+
+                                            <form action="{{ route('subjects.destroy', $subject->id) }}" method="POST"
+                                                onsubmit="return confirm('Delete this class?')">
+                                                @csrf @method('DELETE')
+                                                <button type="submit"
+                                                    class="text-sm font-medium text-red-500 hover:text-red-700 transition">
+                                                    Delete
+                                                </button>
+                                            </form>
                                         @endif
-                                        <th class="p-4">Section</th>
-                                        <th class="p-4">Room</th>
-                                        <th class="p-4 text-center">Students</th>
-                                        <th class="p-4 text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($subjects as $subject)
-                                        <tr
-                                            class="border-b hover:bg-gray-50 transition {{ isset($editSubject) && $editSubject->id == $subject->id ? 'bg-orange-50' : '' }}">
-                                            <td class="p-4 font-bold text-indigo-700">
-                                                {{ $subject->name }}
-                                            </td>
-                                            @if (auth()->user()->is_admin)
-                                                <td class="p-4">
-                                                    <div class="flex items-center gap-2">
-                                                        <div
-                                                            class="h-7 w-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-[10px] font-bold">
-                                                            {{ substr($subject->teacher->name, 0, 1) }}
-                                                        </div>
-                                                        <span
-                                                            class="text-sm font-medium text-gray-700">{{ $subject->teacher->name }}</span>
-                                                    </div>
-                                                </td>
-                                            @endif
-                                            <td class="p-4">
-                                                <span class="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600">
-                                                    {{ $subject->section ?? 'N/A' }}
-                                                </span>
-                                            </td>
-                                            <td class="p-4 text-sm text-gray-600">
-                                                {{ $subject->room ?? '-' }}
-                                            </td>
-                                            <td class="p-4 text-center text-sm font-semibold">
-                                                {{ $subject->students_count }}
-                                            </td>
-                                            <td class="p-4 text-right flex justify-end items-center gap-4">
-                                                <a href="{{ route('attendance.take', $subject->id) }}"
-                                                    class="inline-flex items-center px-3 py-1.5 bg-green-600 border border-transparent rounded-md font-semibold text-[10px] text-white uppercase tracking-widest hover:bg-green-700 shadow-sm">
-                                                    📝 Take Attendance
-                                                </a>
 
-                                                <a href="{{ route('subjects.index', ['edit' => $subject->id]) }}"
-                                                    class="text-xs text-blue-600 hover:text-blue-800 font-bold uppercase tracking-tighter">
-                                                    Edit
-                                                </a>
-
-                                                <form action="{{ route('subjects.destroy', $subject->id) }}"
-                                                    method="POST"
-                                                    onsubmit="return confirm('Delete this class? This will wipe all attendance data for this specific section.')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit"
-                                                        class="text-xs text-red-600 hover:text-red-800 font-bold uppercase tracking-tighter">
-                                                        Delete
-                                                    </button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @endif
-                </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="p-8 text-center text-gray-400">No classes found matching your
+                                    criteria.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

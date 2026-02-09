@@ -3,68 +3,75 @@
 namespace App\Http\Controllers;
 
 use App\Models\Subject;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class SubjectController extends Controller
 {
-    public function index()
-{
-    $query = Subject::withCount('students');
+    public function index(Request $request)
+    {
+        $teachers = User::where('is_admin', false)->get();
+        $query = Subject::with('teacher')->withCount('students');
 
-    if (auth()->user()->is_admin) {
-        $subjects = $query->with('teacher')->get();
-        $teachers = \App\Models\User::where('is_admin', false)->get();
-    } else {
-        $subjects = $query->where('user_id', auth()->id())->get();
-        $teachers = collect();
+        if (! auth()->user()->is_admin) {
+            $query->where('user_id', auth()->id());
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhereHas('teacher', function ($t) use ($search) {
+                        $t->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $subjects = $query->latest()->get();
+
+        $editSubject = null;
+        if ($request->has('edit')) {
+            $editSubject = Subject::find($request->edit);
+            if (! auth()->user()->is_admin && $editSubject->user_id !== auth()->id()) {
+                abort(403);
+            }
+        }
+
+        return view('subjects.index', compact('subjects', 'teachers', 'editSubject'));
     }
-
-    return view('subjects.index', compact('subjects', 'teachers'));
-}
 
     public function store(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'name' => 'required|string|max:255',
-            'section' => 'nullable|string|max:50',
-            'room' => 'nullable|string|max:50',
+            'section' => 'nullable|string',
+            'room' => 'nullable|string',
+            'user_id' => 'required|exists:users,id',
         ]);
 
-        Subject::create([
-            'name' => $request->name,
-            'section' => $request->section,
-            'room' => $request->room,
-            'user_id' => auth()->id(),
-        ]);
+        Subject::create($data);
 
-        return redirect()->route('subjects.index')->with('success', 'Subject created!');
+        return redirect()->route('subjects.index')->with('success', 'Class created successfully!');
     }
 
     public function update(Request $request, Subject $subject)
     {
-        if ($subject->user_id !== auth()->id()) {
-            abort(403);
-        }
-
-        $request->validate([
+        $data = $request->validate([
             'name' => 'required|string|max:255',
-            'section' => 'nullable|string|max:50',
-            'room' => 'nullable|string|max:50',
+            'section' => 'nullable|string',
+            'room' => 'nullable|string',
+            'user_id' => 'required|exists:users,id',
         ]);
 
-        $subject->update($request->only(['name', 'section', 'room']));
+        $subject->update($data);
 
-        return redirect()->route('subjects.index')->with('success', 'Subject updated!');
+        return redirect()->route('subjects.index')->with('success', 'Class updated!');
     }
 
     public function destroy(Subject $subject)
     {
-        if ($subject->user_id !== auth()->id()) {
-            abort(403);
-        }
-
         $subject->delete();
 
-        return redirect()->route('subjects.index')->with('success', 'Subject/Class removed.');
+        return redirect()->route('subjects.index')->with('success', 'Class deleted.');
     }
 }
