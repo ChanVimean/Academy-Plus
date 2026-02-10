@@ -27,11 +27,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // 2. Student & Subject
-    // CRUD: index, create, store, edit, update, destroy
     Route::resource('subjects', SubjectController::class);
 
     // 3. Attendance
-    // Custom route to open the sheet for a specific class
     Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
     Route::get('/attendance/take/{subject}', [AttendanceController::class, 'create'])->name('attendance.take');
     Route::post('/attendance/store/{subject}', [AttendanceController::class, 'store'])->name('attendance.store');
