@@ -57,7 +57,7 @@
                             <th class="p-4 text-xs uppercase text-gray-500">ID</th>
                             <th class="p-4 text-xs uppercase text-gray-500">Teacher Name</th>
                             <th class="p-4 text-xs uppercase text-gray-500">Email</th>
-                            <th class="p-4 text-right text-xs uppercase text-gray-500">Actions</th>
+                            <th class="p-4 text-end text-xs uppercase text-gray-500">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -66,7 +66,7 @@
                                 <td class="p-4 text-sm text-gray-500">#{{ $teacher->id }}</td>
                                 <td class="p-4 font-bold">{{ $teacher->name }}</td>
                                 <td class="p-4 text-sm text-gray-600">{{ $teacher->email }}</td>
-                                <td class="p-4 text-right flex justify-end gap-3">
+                                <td class="p-4 text-center flex justify-evenly items-center gap-3">
                                     <a href="{{ route('teachers.index', ['edit' => $teacher->id]) }}"
                                         class="text-blue-600 text-sm">Edit</a>
                                     <form action="{{ route('teachers.destroy', $teacher->id) }}" method="POST"

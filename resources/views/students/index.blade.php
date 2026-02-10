@@ -20,7 +20,7 @@
                     <div>
                         <x-input-label for="name" value="Student Full Name" class="text-gray-500 font-bold mb-1" />
                         <x-text-input name="name" :value="old('name', $editStudent->name ?? '')"
-                            class="block w-full border-gray-200 focus:ring-indigo-500" placeholder="e.g. John Smith"
+                            class="block w-full border-gray-200 focus:ring-indigo-500" placeholder="Student Full Name"
                             required />
                         <p class="mt-2 text-xs text-gray-400">Enter the student's legal name as it appears on school
                             records.</p>

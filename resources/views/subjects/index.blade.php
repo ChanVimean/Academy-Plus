@@ -48,6 +48,7 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
+            {{-- Search --}}
             <div class="mb-6 flex justify-end">
                 <form action="{{ route('subjects.index') }}" method="GET" class="flex gap-2">
                     <x-text-input name="search" value="{{ request('search') }}"
@@ -63,14 +64,16 @@
 
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <table class="w-full text-left">
+                    {{-- Table Head --}}
                     <thead class="bg-gray-50 border-b">
                         <tr class="text-xs uppercase text-gray-500 font-bold">
                             <th class="p-4">Class Detail</th>
                             <th class="p-4">Professor</th>
                             <th class="p-4 text-center">Students</th>
-                            <th class="p-4 text-right">Actions</th>
+                            <th class="p-4 text-center">Actions</th>
                         </tr>
                     </thead>
+                    {{-- Table Body --}}
                     <tbody>
                         @forelse($subjects as $subject)
                             <tr class="border-b hover:bg-gray-50">
@@ -95,24 +98,13 @@
                                         {{ $subject->students_count }} Enrolled
                                     </span>
                                 </td>
-                                <td class="p-4 text-right">
-                                    <div class="flex justify-end gap-3">
-                                        <a href="{{ route('subjects.index', ['edit' => $subject->id]) }}"
-                                            class="text-blue-600 hover:text-blue-900 text-sm font-medium">Edit</a>
-                                        <form action="{{ route('subjects.destroy', $subject->id) }}" method="POST"
-                                            onsubmit="return confirm('Delete this class?')">
-                                            @csrf @method('DELETE')
-                                            <button type="submit"
-                                                class="text-red-500 hover:text-red-700 text-sm font-medium">Delete</button>
-                                        </form>
-                                    </div>
-                                </td>
-                                <td class="p-4 text-right">
-                                    <div class="flex justify-end items-center gap-3">
+                                <td class="p-4 text-center">
+                                    <div class="flex justify-evenly items-center gap-3">
 
                                         <a href="{{ route('attendance.take', $subject->id) }}"
                                             class="inline-flex items-center px-3 py-1.5 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-900 focus:outline-none focus:border-green-900 focus:ring ring-green-300 disabled:opacity-25 transition ease-in-out duration-150">
-                                            <span class="mr-1">✅</span> Attendance
+                                            <i class="fa-solid fa-check"></i>
+                                            <span class="ms-2">Attendance</span>
                                         </a>
 
                                         @if (auth()->user()->is_admin)
