@@ -15,7 +15,6 @@ class AttendanceController extends Controller
     {
         $subjects = Subject::all();
 
-        // 1. Base Query: Get records with student and subject info
         $query = Attendance::with(['student', 'subject']);
 
         if ($request->filled('search_student')) {
@@ -34,8 +33,6 @@ class AttendanceController extends Controller
 
         $history = $query->latest()->paginate(20);
 
-        // --- ANALYTICS: Who is absent the most? ---
-        // This is the "Engine" part. We count absences grouped by student.
         $topAbsentees = Attendance::where('status', 'absent')
             ->select('student_id', \DB::raw('count(*) as total'))
             ->with('student')

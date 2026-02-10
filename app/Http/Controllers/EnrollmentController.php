@@ -20,7 +20,6 @@ class EnrollmentController extends Controller
 
         $subject = Subject::findOrFail($request->subject_id);
 
-        // attach() or syncWithoutDetaching() adds the link to the pivot table
         $subject->students()->syncWithoutDetaching([$request->student_id]);
 
         return back()->with('success', 'Student enrolled successfully.');
@@ -38,7 +37,6 @@ class EnrollmentController extends Controller
 
         $subject = Subject::findOrFail($request->subject_id);
 
-        // detach() removes the row from the pivot table
         $subject->students()->detach($request->student_id);
 
         return back()->with('success', 'Student removed from class.');

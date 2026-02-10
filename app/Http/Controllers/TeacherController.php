@@ -63,7 +63,6 @@ class TeacherController extends Controller
 
     public function destroy(User $teacher)
     {
-        // Prevent accidental admin deletion if route isn't protected perfectly
         if ($teacher->is_admin) abort(403);
 
         $teacher->delete();
